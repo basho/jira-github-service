@@ -754,13 +754,16 @@ public class GithubWebhook
     {
         // PR created, see if we should create a JIRA issue
         String body;
+        String title;
         if (event.hasPullRequest())
         {
             body = event.getPullRequest().getBody();
+            title = event.getPullRequest().getTitle();
         }
         else // It's a pull request comment, disguised as an issue (wrapped in an Enigma)
         {
             body = event.getComment().getBody();
+            title = event.getIssue().getTitle();
         }
         
         Matcher m = extractImportCommand.matcher(body);
@@ -791,7 +794,8 @@ public class GithubWebhook
                     new CreateIssue.Builder()
                         .withProjectKey(jiraProjectKey)
                         .withIssuetype("Story")
-                        .withSummary("Review submitted PR")
+                        // Don't clobber title in Github - use title from issue/PR
+                        .withSummary(title)
                         .withDescription(desc)
                         .withCustomField(jiraRepoField, "value", jiraRepoName)
                         .withCustomField(githubIssueField, githubIssueNumber)
